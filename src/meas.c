@@ -14,7 +14,6 @@
 _s32 main(int argc, char *argv[])
 {
   _s32 fd;
-  _u16 cap_offset;
   _u8  capdac = CAPDAC;
   _u32 cap_hex;
   float cap[N_SMPLS];
