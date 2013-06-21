@@ -8,7 +8,7 @@
 #define I2C_DEV      "/dev/i2c-3"
 #define AD7745_ADDR  0x48
 #define CAPDAC       0x00
-#define N_SMPLS      100
+#define N_SMPLS      200
 
 /*----------------------------------------------------------------------------*/
 _s32 main(int argc, char *argv[])

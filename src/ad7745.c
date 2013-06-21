@@ -96,7 +96,7 @@ void ad7745_write_capdac(_s32 fd, _u8 capdac)
   i2c_smbus_write_byte_data(fd, AD7745_CAP_DAC_A,
     AD7745_CAP_DAC_A_DACAENA | (capdac & AD7745_CAP_DAC_A_DACA));
   i2c_smbus_write_byte_data(fd, AD7745_EXC_SETUP,
-    AD7745_EXC_SETUP_EXCA | AD7745_EXC_SETUP_EXCLVL0 |
+    AD7745_EXC_SETUP_EXCB | AD7745_EXC_SETUP_EXCLVL0 |
     AD7745_EXC_SETUP_EXCLVL1);
   i2c_smbus_write_byte_data(fd, AD7745_CAP_SETUP,
     AD7745_CAP_SETUP_CAPEN);
@@ -112,7 +112,7 @@ _u16 ad7745_calibrate(_s32 fd, _u8 capdac)
   i2c_smbus_write_byte_data(fd, AD7745_CAP_DAC_A,
     AD7745_CAP_DAC_A_DACAENA | (capdac & AD7745_CAP_DAC_A_DACA));
   i2c_smbus_write_byte_data(fd, AD7745_EXC_SETUP,
-    AD7745_EXC_SETUP_EXCA | AD7745_EXC_SETUP_EXCLVL0 |
+    AD7745_EXC_SETUP_EXCB | AD7745_EXC_SETUP_EXCLVL0 |
     AD7745_EXC_SETUP_EXCLVL1 );
   i2c_smbus_write_byte_data(fd, AD7745_CAP_SETUP,
     AD7745_CAP_SETUP_CAPEN);
