@@ -3,10 +3,10 @@
 #include <string.h>
 #include <math.h>
 
-#include "ad7745.h"
+#include "ad7746.h"
 
 #define I2C_DEV      "/dev/i2c-3"
-#define AD7745_ADDR  0x48
+#define AD7746_ADDR  0x48
 #define CAPDAC       0x00
 #define N_SMPLS      200
 
@@ -23,14 +23,14 @@ _s32 main(int argc, char *argv[])
 
   if (argc==2) sscanf(argv[1],"%x",(_u32 *)&capdac);
 
-  fd = ad7745_init(I2C_DEV, AD7745_ADDR);
+  fd = ad7746_init(I2C_DEV, AD7746_ADDR);
 
-  ad7745_write_capdac(fd, capdac);
-//  cap_offset = ad7745_calibrate(fd, capdac);
+  ad7746_write_capdac(fd, capdac);
+//  cap_offset = ad7746_calibrate(fd, capdac);
 //  printf("CAP_OFFSET: 0x%04X = %.2f pF\n",
 //    cap_offset, ((float)cap_offset-0x8000)/0xFFFF*2.048);
 
-  capdac = ad7745_read_capdac(fd);
+  capdac = ad7746_read_capdac(fd);
   printf("CAPDAC:     0x%02X = %.2f pF\n", capdac,
     ((float)capdac/0x7F)*21.0);
 
@@ -38,13 +38,13 @@ _s32 main(int argc, char *argv[])
 //   ((float)capdac/0x7F)*21.0+
 //   ((float)cap_offset-0x8000)/0xFFFF*2.048);
 
-  if (ad7745_read_excerr(fd))
+  if (ad7746_read_excerr(fd))
     printf("\e[1;31mEXCERR:     1\e[0m\n");
   else
     printf("EXCERR:     0\n");
 
   for(n=0;n<N_SMPLS;n++) {
-    cap_hex = ad7745_convert(fd);
+    cap_hex = ad7746_convert(fd);
     cap[n] = (((float)cap_hex-0x800000)/0xFFFFFF*8.192);
     cap_avg += cap[n]/N_SMPLS;
     printf("\e[1;32mCAP: 0x%02X = %.6f pF\e[0m\n", cap_hex, cap[n]);
@@ -59,6 +59,6 @@ _s32 main(int argc, char *argv[])
   printf("\e[1;33mCAP_AVG: %.6f pF\e[0m\n", cap_avg);
   printf("\e[1;33mCAP_STD: %.3f aF\e[0m\n", cap_std*1E6);
 
-  ad7745_finalize(fd);
+  ad7746_finalize(fd);
   return 0;
 }

@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,10 +9,10 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "ad7745.h"
+#include "ad7746.h"
 
 #define I2C_DEV      "/dev/i2c-3"
-#define AD7745_ADDR  0x48
+#define AD7746_ADDR  0x48
 #define CAPDAC       0x00
 #define N_SMPLS      10
 #define N_PORT       4646
@@ -29,14 +30,14 @@ _s32 main(int argc, char *argv[])
 
   if (argc==2) sscanf(argv[1],"%x",(_u32 *)&capdac);
 
-  fd = ad7745_init(I2C_DEV, AD7745_ADDR);
+  fd = ad7746_init(I2C_DEV, AD7746_ADDR);
 
-  ad7745_write_capdac(fd, capdac);
-  capdac = ad7745_read_capdac(fd);
+  ad7746_write_capdac(fd, capdac);
+  capdac = ad7746_read_capdac(fd);
   printf("CAPDAC:     0x%02X = %.2f pF\n", capdac,
     ((float)capdac/0x7F)*21.0);
 
-  if (ad7745_read_excerr(fd))
+  if (ad7746_read_excerr(fd))
     printf("\e[1;31mEXCERR:     1\e[0m\n");
   else
     printf("EXCERR:     0\n");
@@ -55,7 +56,7 @@ _s32 main(int argc, char *argv[])
   conn_fd = accept(sock_fd, (struct sockaddr*)NULL, NULL);
   do {
     for(n=0;n<N_SMPLS;n++) {
-      cap_hex = ad7745_convert(fd);
+      cap_hex = ad7746_convert(fd);
       cap[n] = cap_hex;
       printf("\e[1;32mCAP: 0x%02X = %.6f pF\e[0m\n", cap_hex,
         (((float)cap_hex-0x800000)/0xFFFFFF*8.192));
@@ -63,6 +64,6 @@ _s32 main(int argc, char *argv[])
   } while (write(conn_fd, cap, sizeof(float)*N_SMPLS)!=-1);
   printf("\e[1;34mTCP/IP connection lost...\e[0m\n");
   close(conn_fd);
-  ad7745_finalize(fd);
+  ad7746_finalize(fd);
   return 0;
 }
