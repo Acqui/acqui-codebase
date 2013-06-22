@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "ad7746.h"
+#include "../../dev/ad7746.h"
 
 #define I2C_DEV      "/dev/i2c-3"
 #define AD7746_ADDR  0x48
