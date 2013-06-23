@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +19,7 @@
 /*----------------------------------------------------------------------------*/
 _s32 main(int argc, char *argv[])
 {
-  _s32  fd;
+  _ad7746  *ad7746 = ad7746_new(I2C_DEV, AD7746_ADDR);
   _u8   capdac = CAPDAC;
   _u32  cap_hex;
   _u32  cap[N_SMPLS];
@@ -30,14 +29,16 @@ _s32 main(int argc, char *argv[])
 
   if (argc==2) sscanf(argv[1],"%x",(_u32 *)&capdac);
 
-  fd = ad7746_init(I2C_DEV, AD7746_ADDR);
+  ad7746->cin = AD7746_CIN2;
+  ad7746->exc = AD7746_EXCB;
+  ad7746_write_setup(ad7746);
 
-  ad7746_write_capdac(fd, capdac);
-  capdac = ad7746_read_capdac(fd);
+  ad7746_write_capdac(ad7746, capdac);
+  capdac = ad7746_read_capdac(ad7746);
   printf("CAPDAC:     0x%02X = %.2f pF\n", capdac,
     ((float)capdac/0x7F)*21.0);
 
-  if (ad7746_read_excerr(fd))
+  if (ad7746_read_excerr(ad7746))
     printf("\e[1;31mEXCERR:     1\e[0m\n");
   else
     printf("EXCERR:     0\n");
@@ -56,7 +57,7 @@ _s32 main(int argc, char *argv[])
   conn_fd = accept(sock_fd, (struct sockaddr*)NULL, NULL);
   do {
     for(n=0;n<N_SMPLS;n++) {
-      cap_hex = ad7746_convert(fd);
+      cap_hex = ad7746_convert(ad7746);
       cap[n] = cap_hex;
       printf("\e[1;32mCAP: 0x%02X = %.6f pF\e[0m\n", cap_hex,
         (((float)cap_hex-0x800000)/0xFFFFFF*8.192));
@@ -64,6 +65,6 @@ _s32 main(int argc, char *argv[])
   } while (write(conn_fd, cap, sizeof(float)*N_SMPLS)!=-1);
   printf("\e[1;34mTCP/IP connection lost...\e[0m\n");
   close(conn_fd);
-  ad7746_finalize(fd);
+  ad7746_delete(ad7746);
   return 0;
 }

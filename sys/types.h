@@ -8,5 +8,6 @@ typedef signed short       _s16;
 typedef unsigned char      _u8;
 typedef signed char        _s8;
 typedef enum{FALSE, TRUE}  _bool;
+typedef void               _priv;
 
 #endif

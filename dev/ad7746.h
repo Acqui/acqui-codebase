@@ -3,17 +3,22 @@
 
 #include "../sys/types.h"
 
-typedef enum {AD7746_CIN1, AD7746_CIN2} _ad7746_cin;
-typedef enum {AD7746_EXCA, AD7746_EXCB} _ad7746_exc;
-typedef enum {AD7746_CIN1_EXCA, AD7746_CIN1_EXB,
-              AD7746_CIN2_EXCA, AD7746_CIN2_EXB} _ad7746_cin_exc;
+typedef struct {
+  enum {AD7746_CIN1, AD7746_CIN2} cin;
+  enum {AD7746_EXCA, AD7746_EXCB} exc;
+  enum {AD7746_EXCL_1_OVER_8, AD7746_EXCL_1_OVER_4,
+        AD7746_EXCL_3_OVER_8, AD7746_EXCL_1_OVER_2} excl;
+  _bool cap_diff;
+  _priv *priv;
+} _ad7746;
 
-_s32   ad7746_init(const char *dev, _u8 slave);
-void   ad7746_write_capdac(_s32 fd, _u8 capdac);
-_u16   ad7746_calibrate(_s32 fd, _u8 capdac);
-_u32   ad7746_convert(_s32 fd);
-_bool  ad7746_read_excerr(_s32 fd);
-_u8    ad7746_read_capdac(_s32 fd);
-void   ad7746_finalize(_s32 fd);
+_ad7746* ad7746_new(char *dev, _u8 addr);
+void     ad7746_delete(_ad7746 *ad7746);
+void     ad7746_write_setup(_ad7746 *ad7746);
+void     ad7746_write_capdac(_ad7746 *ad7746, _u8 capdac);
+_u16     ad7746_calibrate(_ad7746 *ad7746, _u8 capdac);
+_u32     ad7746_convert(_ad7746 *ad7746);
+_bool    ad7746_read_excerr(_ad7746 *ad7746);
+_u8      ad7746_read_capdac(_ad7746 *ad7746);
 
 #endif

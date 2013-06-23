@@ -49,6 +49,7 @@
 
 #define AD7746_EXC_SETUP_EXCLVL0 0x01
 #define AD7746_EXC_SETUP_EXCLVL1 0x02
+
 #define AD7746_EXC_SETUP_NEXCA   0x04
 #define AD7746_EXC_SETUP_EXCA    0x08
 #define AD7746_EXC_SETUP_NEXCB   0x10
@@ -72,102 +73,121 @@
 #define AD7746_CAP_DAC_A_DACBENB 0x80
 
 /*----------------------------------------------------------------------------*/
-_s32 ad7746_init(const char *dev, _u8 addr)
-{
+#define THIS ((_ad7746_priv *)ad7746->priv)
+
+typedef struct {
   _s32 fd;
+} _ad7746_priv;
+
+/*----------------------------------------------------------------------------*/
+_ad7746* ad7746_new(char *dev, _u8 addr)
+{
+  _ad7746 *ad7746;
   _u32 funcs;
 
-  if ((fd = open(dev, O_RDWR)) < 0) {
+  ad7746 = malloc(sizeof(_ad7746));
+  ad7746->priv = malloc(sizeof(_ad7746_priv));
+
+  if ((THIS->fd = open(dev, O_RDWR)) < 0) {
     perror("Unable to open I2C control file.\n");
-    exit(1);
+    return NULL;
   }
 
-  ioctl(fd, I2C_FUNCS, &funcs);
+  ioctl(THIS->fd, I2C_FUNCS, &funcs);
   if (!(funcs & I2C_FUNC_SMBUS_READ_BYTE_DATA)) {
-    printf("SMBus read byte data not supported.\n");
-    exit(1);
+    perror("SMBus read byte-data not supported.\n");
+    return NULL;
   }
 
-  ioctl(fd, I2C_SLAVE, addr);
+  ioctl(THIS->fd, I2C_SLAVE, addr);
 
-  return fd;
+  return ad7746;
 }
 
-
 /*----------------------------------------------------------------------------*/
-void ad7746_write_capdac(_s32 fd, _u8 capdac)
+void ad7746_delete(_ad7746 *ad7746)
 {
-  i2c_smbus_write_byte_data(fd, AD7746_CAP_DAC_A,
-    AD7746_CAP_DAC_A_DACAENA | (capdac & AD7746_CAP_DAC_A_DACA));
-  i2c_smbus_write_byte_data(fd, AD7746_EXC_SETUP,
-    AD7746_EXC_SETUP_EXCB | AD7746_EXC_SETUP_EXCLVL0 |
-    AD7746_EXC_SETUP_EXCLVL1);
-  i2c_smbus_write_byte_data(fd, AD7746_CAP_SETUP,
-    AD7746_CAP_SETUP_CAPEN);
-  i2c_smbus_write_byte_data(fd, AD7746_CAP_DAC_A,
+  close(THIS->fd);
+  free(ad7746->priv);
+  free(ad7746);
+}
+
+/*----------------------------------------------------------------------------*/
+void ad7746_write_setup(_ad7746 *ad7746)
+{
+  _u8 exc_reg = 0x00;
+  _u8 cap_reg = 0x00;
+
+  if (ad7746->exc == AD7746_EXCA) exc_reg |= AD7746_EXC_SETUP_EXCA;
+  if (ad7746->exc == AD7746_EXCB) exc_reg |= AD7746_EXC_SETUP_EXCB;
+  if (ad7746->excl == AD7746_EXCL_1_OVER_4) exc_reg |= AD7746_EXC_SETUP_EXCLVL0;
+  if (ad7746->excl == AD7746_EXCL_3_OVER_8) exc_reg |= AD7746_EXC_SETUP_EXCLVL1;
+  if (ad7746->excl == AD7746_EXCL_1_OVER_2)
+    exc_reg |= AD7746_EXC_SETUP_EXCLVL0 | AD7746_EXC_SETUP_EXCLVL1;
+  i2c_smbus_write_byte_data(THIS->fd, AD7746_EXC_SETUP, exc_reg);
+
+  if (ad7746->cin == AD7746_CIN2) cap_reg |= AD7746_CAP_SETUP_CIN2;
+  if (ad7746->cap_diff == TRUE) cap_reg |= AD7746_CAP_SETUP_CAPDIFF;
+  cap_reg |= AD7746_CAP_SETUP_CAPEN;
+  i2c_smbus_write_byte_data(THIS->fd, AD7746_CAP_SETUP, cap_reg);
+}
+
+/*----------------------------------------------------------------------------*/
+void ad7746_write_capdac(_ad7746 *ad7746,_u8 capdac)
+{
+  i2c_smbus_write_byte_data(THIS->fd, AD7746_CAP_DAC_A,
     AD7746_CAP_DAC_A_DACAENA | (capdac & AD7746_CAP_DAC_A_DACA));
 }
 
 /*----------------------------------------------------------------------------*/
-_u16 ad7746_calibrate(_s32 fd, _u8 capdac)
+_u16 ad7746_calibrate(_ad7746 *ad7746,_u8 capdac)
 {
   _u16 data;
 
-  i2c_smbus_write_byte_data(fd, AD7746_CAP_DAC_A,
+  i2c_smbus_write_byte_data(THIS->fd, AD7746_CAP_DAC_A,
     AD7746_CAP_DAC_A_DACAENA | (capdac & AD7746_CAP_DAC_A_DACA));
-  i2c_smbus_write_byte_data(fd, AD7746_EXC_SETUP,
-    AD7746_EXC_SETUP_EXCB | AD7746_EXC_SETUP_EXCLVL0 |
-    AD7746_EXC_SETUP_EXCLVL1 );
-  i2c_smbus_write_byte_data(fd, AD7746_CAP_SETUP,
-    AD7746_CAP_SETUP_CAPEN);
-  i2c_smbus_write_byte_data(fd, AD7746_CONFIGURE,
+  i2c_smbus_write_byte_data(THIS->fd, AD7746_CONFIGURE,
     AD7746_CONFIGURE_MD2 | AD7746_CONFIGURE_MD0 |
     AD7746_CONFIGURE_CAPF2 | AD7746_CONFIGURE_CAPF1 |
     AD7746_CONFIGURE_CAPF0);
   usleep(200000);
-  while (i2c_smbus_read_byte_data(fd, AD7746_STATUS) &
+  while (i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
     AD7746_STATUS_RDYCAP) continue;
-  data  = i2c_smbus_read_byte_data(fd, AD7746_CAP_OFFSET_H) << 0x08;
-  data |= i2c_smbus_read_byte_data(fd, AD7746_CAP_OFFSET_L);
+  data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_OFFSET_H) << 0x08;
+  data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_OFFSET_L);
 
   return data;
 }
 
 /*----------------------------------------------------------------------------*/
-_u32 ad7746_convert(_s32 fd)
+_u32 ad7746_convert(_ad7746 *ad7746)
 {
   _u32 data;
 
-  i2c_smbus_write_byte_data(fd, AD7746_CONFIGURE,
+  i2c_smbus_write_byte_data(THIS->fd, AD7746_CONFIGURE,
     AD7746_CONFIGURE_MD1 |
     AD7746_CONFIGURE_CAPF2 | AD7746_CONFIGURE_CAPF1 |
     AD7746_CONFIGURE_CAPF0);
   usleep(200000);
-  while (i2c_smbus_read_byte_data(fd, AD7746_STATUS) &
+  while (i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
     AD7746_STATUS_RDYCAP) continue;
-  data  = i2c_smbus_read_byte_data(fd, AD7746_CAP_DATA_H) << 0x0F;
-  data |= i2c_smbus_read_byte_data(fd, AD7746_CAP_DATA_M) << 0x08;
-  data |= i2c_smbus_read_byte_data(fd, AD7746_CAP_DATA_L);
+  data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_H) << 0x0F;
+  data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_M) << 0x08;
+  data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_L);
 
   return data;
 }
 
 /*----------------------------------------------------------------------------*/
-_bool ad7746_read_excerr(_s32 fd)
+_bool ad7746_read_excerr(_ad7746 *ad7746)
 {
-  return ((i2c_smbus_read_byte_data(fd, AD7746_STATUS) &
+  return ((i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
     AD7746_STATUS_EXCERR) > 0x00);
 }
 
 /*----------------------------------------------------------------------------*/
-_u8 ad7746_read_capdac(_s32 fd)
+_u8 ad7746_read_capdac(_ad7746 *ad7746)
 {
-  return (i2c_smbus_read_byte_data(fd, AD7746_CAP_DAC_A) &
+  return (i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DAC_A) &
     AD7746_CAP_DAC_A_DACA);
-}
-
-/*----------------------------------------------------------------------------*/
-void ad7746_finalize(_s32 fd)
-{
-  close(fd);
 }
