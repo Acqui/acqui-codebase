@@ -21,8 +21,8 @@ _s32 main(int argc, char *argv[])
 {
   _ad7746  *ad7746 = ad7746_new(I2C_DEV, AD7746_ADDR);
   _u8   capdac = CAPDAC;
-  _u32  cap_hex;
-  _u32  cap[N_SMPLS];
+  _u32  cap_hex_1, cap_hex_2;
+  _u32  cap[N_SMPLS][2];
   _u8  n;
   _s32 sock_fd = 0, conn_fd = 0;
   struct sockaddr_in serv_addr;
@@ -57,12 +57,23 @@ _s32 main(int argc, char *argv[])
   conn_fd = accept(sock_fd, (struct sockaddr*)NULL, NULL);
   do {
     for(n=0;n<N_SMPLS;n++) {
-      cap_hex = ad7746_convert(ad7746);
-      cap[n] = cap_hex;
-      printf("\e[1;32mCAP: 0x%02X = %.6f pF\e[0m\n", cap_hex,
-        (((float)cap_hex-0x800000)/0xFFFFFF*8.192));
+      ad7746->cin = AD7746_CIN2;
+      ad7746->exc = AD7746_EXCB;
+      ad7746_write_setup(ad7746);
+      cap_hex_1 = ad7746_convert(ad7746);
+      cap[n][0] = cap_hex_1;
+      ad7746->cin = AD7746_CIN1;
+      ad7746->exc = AD7746_EXCA;
+      ad7746_write_setup(ad7746);
+      cap_hex_2 = ad7746_convert(ad7746);
+      cap[n][1] = cap_hex_2;
+      printf("\e[1;32mCAP_1: 0x%02X = %.6f pF\t\t"
+        "CAP_2: 0x%02X = %.6f pF\e[0m\n",
+         cap_hex_1, (((float)cap_hex_1-0x800000)/0xFFFFFF*8.192),
+         cap_hex_2, (((float)cap_hex_2-0x800000)/0xFFFFFF*8.192));
     }
-  } while (write(conn_fd, cap, sizeof(float)*N_SMPLS)!=-1);
+  } while (write(conn_fd, cap, sizeof(float)*N_SMPLS*2)!=-1);
+
   printf("\e[1;34mTCP/IP connection lost...\e[0m\n");
   close(conn_fd);
   ad7746_delete(ad7746);
