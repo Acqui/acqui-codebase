@@ -88,6 +88,11 @@ _ad7746* ad7746_new(char *dev, _u8 addr)
   ad7746 = malloc(sizeof(_ad7746));
   ad7746->priv = malloc(sizeof(_ad7746_priv));
 
+  ad7746->cin = AD7746_CIN1;
+  ad7746->exc = AD7746_EXCA;
+  ad7746->excl = AD7746_EXCL_1_OVER_2;
+  ad7746->cap_diff = FALSE;
+
   if ((THIS->fd = open(dev, O_RDWR)) < 0) {
     perror("Unable to open I2C control file.\n");
     return NULL;
