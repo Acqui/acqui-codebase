@@ -76,6 +76,8 @@ _s32 main(int argc, char *argv[])
 
   printf("\e[1;34mTCP/IP connection lost...\e[0m\n");
   close(conn_fd);
+
+  ad7746_idle(ad7746);
   ad7746_delete(ad7746);
   return 0;
 }

@@ -138,6 +138,12 @@ void ad7746_write_setup(_ad7746 *ad7746)
 }
 
 /*----------------------------------------------------------------------------*/
+void ad7746_idle(_ad7746 *ad7746)
+{
+  i2c_smbus_write_byte_data(THIS->fd, AD7746_CAP_SETUP, 0x00);
+}
+
+/*----------------------------------------------------------------------------*/
 void ad7746_write_capdac(_ad7746 *ad7746,_u8 capdac)
 {
   i2c_smbus_write_byte_data(THIS->fd, AD7746_CAP_DAC_A,
