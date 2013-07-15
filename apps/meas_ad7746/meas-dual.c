@@ -28,6 +28,7 @@ _s32 main(int argc, char *argv[])
 
   ad7746->cin = AD7746_CIN2;
   ad7746->exc = AD7746_EXCB;
+  ad7746->excl = AD7746_EXCL_1_OVER_2;
   ad7746_write_setup(ad7746);
 
   ad7746_write_capdac(ad7746, capdac);
@@ -51,6 +52,7 @@ _s32 main(int argc, char *argv[])
   for(n=0;n<N_SMPLS;n++) {
     ad7746->cin = AD7746_CIN2;
     ad7746->exc = AD7746_EXCB;
+    ad7746->excl = AD7746_EXCL_1_OVER_2;
     ad7746_write_setup(ad7746);
     cap_hex_1 = ad7746_convert(ad7746);
     cap_1[n] = (((float)cap_hex_1-0x800000)/0xFFFFFF*8.192);
@@ -58,6 +60,7 @@ _s32 main(int argc, char *argv[])
 
     ad7746->cin = AD7746_CIN1;
     ad7746->exc = AD7746_EXCA;
+    ad7746->excl = AD7746_EXCL_1_OVER_2;
     ad7746_write_setup(ad7746);
     cap_hex_2 = ad7746_convert(ad7746);
     cap_2[n] = (((float)cap_hex_2-0x800000)/0xFFFFFF*8.192);

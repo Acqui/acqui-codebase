@@ -31,6 +31,7 @@ _s32 main(int argc, char *argv[])
 
   ad7746->cin = AD7746_CIN1;
   ad7746->exc = AD7746_EXCA;
+  ad7746->excl = AD7746_EXCL_1_OVER_2;
   ad7746_write_setup(ad7746);
 
   ad7746_write_capdac(ad7746, capdac);
@@ -58,6 +59,7 @@ _s32 main(int argc, char *argv[])
   do {
     ad7746->cin = AD7746_CIN1;
     ad7746->exc = AD7746_EXCA;
+    ad7746->excl = AD7746_EXCL_1_OVER_2;
     ad7746_write_setup(ad7746);
     for(n=0;n<N_SMPLS;n++) {
       cap_hex = ad7746_convert(ad7746);
