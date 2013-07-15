@@ -129,6 +129,7 @@ void ad7746_write_setup(_ad7746 *ad7746)
   if (ad7746->excl == AD7746_EXCL_3_OVER_8) exc_reg |= AD7746_EXC_SETUP_EXCLVL1;
   if (ad7746->excl == AD7746_EXCL_1_OVER_2)
     exc_reg |= AD7746_EXC_SETUP_EXCLVL0 | AD7746_EXC_SETUP_EXCLVL1;
+  exc_reg |= AD7746_EXC_SETUP_EXCON;
   i2c_smbus_write_byte_data(THIS->fd, AD7746_EXC_SETUP, exc_reg);
 
   if (ad7746->cin == AD7746_CIN2) cap_reg |= AD7746_CAP_SETUP_CIN2;
