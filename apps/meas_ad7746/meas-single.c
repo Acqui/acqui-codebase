@@ -5,7 +5,7 @@
 
 #include "../../dev/ad7746.h"
 
-#define I2C_DEV      "/dev/i2c-3"
+#define I2C_DEV      "/dev/i2c-1"
 #define AD7746_ADDR  0x48
 #define CAPDAC       0x00
 #define N_SMPLS      200
@@ -21,6 +21,7 @@ _s32 main(int argc, char *argv[])
   float cap_std = 0.0;
   _u8  n;
 
+  if (ad7746 == NULL) exit(1);
   if (argc==2) sscanf(argv[1],"%x",(_u32 *)&capdac);
 
   ad7746->cin = AD7746_CIN1;

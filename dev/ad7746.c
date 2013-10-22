@@ -92,15 +92,20 @@ _ad7746* ad7746_new(char *dev, _u8 addr)
   ad7746->exc = AD7746_EXCA;
   ad7746->excl = AD7746_EXCL_1_OVER_2;
   ad7746->cap_diff = FALSE;
+  ad7746->usleep = 200000;
 
   if ((THIS->fd = open(dev, O_RDWR)) < 0) {
     perror("Unable to open I2C control file.\n");
+    free(ltc2493->priv);
+    free(ltc2493);
     return NULL;
   }
 
   ioctl(THIS->fd, I2C_FUNCS, &funcs);
   if (!(funcs & I2C_FUNC_SMBUS_READ_BYTE_DATA)) {
     perror("SMBus read byte-data not supported.\n");
+    free(ltc2493->priv);
+    free(ltc2493);
     return NULL;
   }
 
@@ -162,7 +167,7 @@ _u16 ad7746_calibrate(_ad7746 *ad7746,_u8 capdac)
     AD7746_CONFIGURE_MD2 | AD7746_CONFIGURE_MD0 |
     AD7746_CONFIGURE_CAPF2 | AD7746_CONFIGURE_CAPF1 |
     AD7746_CONFIGURE_CAPF0);
-  usleep(200000);
+  usleep(ad7746->usleep);
   while (i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
     AD7746_STATUS_RDYCAP) continue;
   data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_OFFSET_H) << 0x08;
@@ -180,7 +185,7 @@ _u32 ad7746_convert(_ad7746 *ad7746)
     AD7746_CONFIGURE_MD1 |
     AD7746_CONFIGURE_CAPF2 | AD7746_CONFIGURE_CAPF1 |
     AD7746_CONFIGURE_CAPF0);
-  usleep(200000);
+  usleep(ad7746->usleep);
   while (i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
     AD7746_STATUS_RDYCAP) continue;
   data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_H) << 0x0F;

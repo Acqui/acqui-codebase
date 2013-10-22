@@ -26,14 +26,20 @@ _ltc2493* ltc2493_new(char *dev, _u8 addr)
   ltc2493 = malloc(sizeof(_ltc2493));
   ltc2493->priv = malloc(sizeof(_ltc2493_priv));
 
-  if ((THIS->fd = open("/dev/i2c-3", O_RDWR)) < 0) {
+  ltc2493->usleep = 200000;
+
+  if ((THIS->fd = open(dev, O_RDWR)) < 0) {
     perror("Unable to open I2C control file.\n");
+    free(ltc2493->priv);
+    free(ltc2493);
     return NULL;
   }
 
   ioctl(THIS->fd, I2C_FUNCS, &funcs);
   if (!(funcs & I2C_FUNC_I2C)) {
     perror("Plain I2C commands not supported.\n");
+    free(ltc2493->priv);
+    free(ltc2493);
     return NULL;
   }
 
@@ -53,7 +59,7 @@ void ltc2493_delete(_ltc2493 *ltc2493)
 /*----------------------------------------------------------------------------*/
 void ltc2493_write_setup(_ltc2493 *ltc2493)
 {
-  _u8 buf[2];
+  _u8 buf[1];
 
   switch (ltc2493->chnl_sel) {
     case LTC2493_CHNL_0_1:
@@ -80,31 +86,12 @@ void ltc2493_write_setup(_ltc2493 *ltc2493)
     case LTC2493_CHNL_3:
       buf[0] = 0xB9;
       break;
-    case LTC2493_CHNL_TEMP:
-      buf[0] = 0xA0;
     default:
       buf[0] = 0x00;
   }
 
-  buf[1] = 0x80;
-  if (ltc2493->chnl_sel == LTC2493_CHNL_TEMP) buf[1] |= 0x40;
-  if (ltc2493->out_rate == LTC2493_RATE_DOUBLE) buf[1] |= 0x08;
-  switch (ltc2493->reject) {
-    case LTC2493_REJECT_50HZ:
-      buf[1] |= 0x10;
-      break;
-    case LTC2493_REJECT_60HZ:
-      buf[1] |= 0x20;
-      break;
-    case LTC2493_REJECT_50HZ_60HZ:
-      buf[1] |= 0x30;
-      break;
-    default:
-      buf[1] |= 0x30;
-  }
-
   write(THIS->fd, buf, 1);
-  usleep(2000000);
+  usleep(ltc2493->usleep);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -116,7 +103,6 @@ _s32 ltc2493_convert(_ltc2493 *ltc2493)
   if(read(THIS->fd, &buf, 4) != 4)
     return (0x03 << 29);
   else {
-    printf("%X %X %X %X\n",buf[0],buf[1],buf[2],buf[3]);
     conv  = ((_s32)buf[0] & 0x3F) << 18;
     conv |= ((_s32)buf[1]) << 10;
     conv |= ((_s32)buf[2]) << 2;

@@ -9,6 +9,7 @@ typedef struct {
   enum {AD7746_EXCL_1_OVER_8, AD7746_EXCL_1_OVER_4,
         AD7746_EXCL_3_OVER_8, AD7746_EXCL_1_OVER_2} excl;
   _bool cap_diff;
+  _u32 usleep;
   _priv *priv;
 } _ad7746;
 

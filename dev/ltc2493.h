@@ -7,13 +7,8 @@ typedef struct {
   enum {LTC2493_CHNL_0_1, LTC2493_CHNL_2_3,
         LTC2493_CHNL_1_0, LTC2493_CHNL_3_2,
         LTC2493_CHNL_0, LTC2493_CHNL_2,
-        LTC2493_CHNL_1, LTC2493_CHNL_3,
-        LTC2493_CHNL_TEMP} chnl_sel;
-  enum {LTC2493_RATE_SINGLE,
-        LTC2493_RATE_DOUBLE} out_rate;
-  enum {LTC2493_REJECT_50HZ,
-        LTC2493_REJECT_60HZ,
-        LTC2493_REJECT_50HZ_60HZ} reject;
+        LTC2493_CHNL_1, LTC2493_CHNL_3} chnl_sel;
+ _u32 usleep;
   _priv *priv;
 } _ltc2493;
 
