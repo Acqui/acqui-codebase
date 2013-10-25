@@ -1,7 +1,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <errno.h>
 #include <linux/i2c-dev.h>
 
 #include <stdio.h>
@@ -95,17 +94,17 @@ _ad7746* ad7746_new(char *dev, _u8 addr)
   ad7746->usleep = 200000;
 
   if ((THIS->fd = open(dev, O_RDWR)) < 0) {
-    perror("Unable to open I2C control file.\n");
-    free(ltc2493->priv);
-    free(ltc2493);
+    fprintf(stderr,"Unable to open I2C control file.\n");
+    free(ad7746->priv);
+    free(ad7746);
     return NULL;
   }
 
   ioctl(THIS->fd, I2C_FUNCS, &funcs);
   if (!(funcs & I2C_FUNC_SMBUS_READ_BYTE_DATA)) {
-    perror("SMBus read byte-data not supported.\n");
-    free(ltc2493->priv);
-    free(ltc2493);
+    fprintf(stderr,"SMBus read byte-data not supported.\n");
+    free(ad7746->priv);
+    free(ad7746);
     return NULL;
   }
 
@@ -177,7 +176,7 @@ _u16 ad7746_calibrate(_ad7746 *ad7746,_u8 capdac)
 }
 
 /*----------------------------------------------------------------------------*/
-_u32 ad7746_convert(_ad7746 *ad7746)
+_u32 ad7746_acquire(_ad7746 *ad7746)
 {
   _u32 data;
 

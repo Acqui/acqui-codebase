@@ -19,7 +19,7 @@ void     ad7746_write_setup(_ad7746 *ad7746);
 void     ad7746_idle(_ad7746 *ad7746);
 void     ad7746_write_capdac(_ad7746 *ad7746, _u8 capdac);
 _u16     ad7746_calibrate(_ad7746 *ad7746, _u8 capdac);
-_u32     ad7746_convert(_ad7746 *ad7746);
+_u32     ad7746_acquire(_ad7746 *ad7746);
 _bool    ad7746_read_excerr(_ad7746 *ad7746);
 _u8      ad7746_read_capdac(_ad7746 *ad7746);
 

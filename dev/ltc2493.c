@@ -1,7 +1,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <errno.h>
 #include <linux/i2c-dev.h>
 
 #include <stdio.h>
@@ -29,7 +28,7 @@ _ltc2493* ltc2493_new(char *dev, _u8 addr)
   ltc2493->usleep = 200000;
 
   if ((THIS->fd = open(dev, O_RDWR)) < 0) {
-    perror("Unable to open I2C control file.\n");
+    fprintf(stderr,"Unable to open I2C control file.\n");
     free(ltc2493->priv);
     free(ltc2493);
     return NULL;
@@ -37,7 +36,7 @@ _ltc2493* ltc2493_new(char *dev, _u8 addr)
 
   ioctl(THIS->fd, I2C_FUNCS, &funcs);
   if (!(funcs & I2C_FUNC_I2C)) {
-    perror("Plain I2C commands not supported.\n");
+    fprintf(stderr,"Plain I2C commands not supported.\n");
     free(ltc2493->priv);
     free(ltc2493);
     return NULL;
@@ -95,7 +94,7 @@ void ltc2493_write_setup(_ltc2493 *ltc2493)
 }
 
 /*----------------------------------------------------------------------------*/
-_s32 ltc2493_convert(_ltc2493 *ltc2493)
+_s32 ltc2493_acquire(_ltc2493 *ltc2493)
 {
   _u8  buf[4];
   _s32 conv;

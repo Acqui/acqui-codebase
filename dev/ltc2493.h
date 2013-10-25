@@ -15,6 +15,6 @@ typedef struct {
 _ltc2493* ltc2493_new(char *dev, _u8 addr);
 void      ltc2493_delete(_ltc2493 *ltc2493);
 void      ltc2493_write_setup(_ltc2493 *ltc2493);
-_s32      ltc2493_convert(_ltc2493 *ltc2493);
+_s32      ltc2493_acquire(_ltc2493 *ltc2493);
 
 #endif

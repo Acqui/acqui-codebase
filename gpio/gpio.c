@@ -23,7 +23,7 @@ _s32 main(int argc, char *argv[])
 
   sprintf(buf, "/sys/class/gpio/gpio%d/direction", GPIO_PIN);
   fd = open(buf, O_WRONLY);
-  write(fd, "high", 4);
+  write(fd, "out", 4);
   close(fd);
 
   sprintf(buf, "/sys/class/gpio/gpio%d/value", GPIO_PIN);
