@@ -9,16 +9,17 @@
 #define I2C_DEV      "/dev/i2c-1"
 #define AD7746_ADDR  0x48
 #define CAPDAC       0x00
-#define N_SMPLS      200
+#define N_SMPLS      10
 
 /*----------------------------------------------------------------------------*/
 _s32 main(int argc, char *argv[])
 {
   _ad7746 *ad7746 = ad7746_new(I2C_DEV, AD7746_ADDR);
   _u8  capdac = CAPDAC;
+  _u16 n_smpls = N_SMPLS;
   _u32 cap_hex_1, cap_hex_2;
-  float cap_1[N_SMPLS];
-  float cap_2[N_SMPLS];
+  float *cap_1;
+  float *cap_2;
   float cap_avg_1 = 0.0;
   float cap_avg_2 = 0.0;
   float cap_std_1 = 0.0;
@@ -29,23 +30,29 @@ _s32 main(int argc, char *argv[])
 
 
   if (argc==2 && strcmp (argv[1],"--help") == 0) {
-    printf("usage: meas-ad7746 [--help] [-d] [-c CAPDAC]\n\n");
-    printf("  --help,     display this help\n");
-    printf("  -c CAPDAC,  set hexdecimal CAPDAC value\n");
-    printf("  -d,         select dual channel\n");
+    printf("usage: meas-ad7746 [--help] [-d] [-c CAPDAC] [-n SAMPLES]\n\n");
+    printf("  --help,      display this help and exit\n");
+    printf("  -c CAPDAC,   set hexdecimal CAPDAC value\n");
+    printf("               [ 0x%02X = default ]\n", CAPDAC);
+    printf("  -n SAMPLES,  number of samples\n");
+    printf("               [ %d = default ]\n", N_SMPLS);
+    printf("  -d           select dual channel\n");
     if (ad7746 != NULL) ad7746_delete(ad7746);
     return 0;
   }
 
   if (ad7746 == NULL) return 1;
 
-  while ((opt = getopt(argc, argv, "dc:")) != -1) {
+  while ((opt = getopt(argc, argv, "dc:n:")) != -1) {
     switch (opt) {
       case 'd':
         dual_chnl = TRUE;
         break;
       case 'c':
         sscanf(optarg,"%x",(_u32 *)&capdac);
+        break;
+      case 'n':
+        sscanf(optarg,"%u",(_u32 *)&n_smpls);
         break;
       case '?':
         ad7746_delete(ad7746);
@@ -55,6 +62,9 @@ _s32 main(int argc, char *argv[])
         return 1;
     }
   }
+
+  cap_1 = malloc(sizeof(float)*n_smpls);
+  if (dual_chnl == TRUE) cap_2 = malloc(sizeof(float)*n_smpls);
 
   ad7746->cin = AD7746_CIN2;
   ad7746->exc = AD7746_EXCB;
@@ -79,14 +89,14 @@ _s32 main(int argc, char *argv[])
   else
     printf("EXCERR:     0\n");
 
-  for(n=0;n<N_SMPLS;n++) {
+  for (n=0;n<n_smpls;n++) {
     ad7746->cin = AD7746_CIN2;
     ad7746->exc = AD7746_EXCB;
     ad7746->excl = AD7746_EXCL_1_OVER_2;
     ad7746_write_setup(ad7746);
     cap_hex_1 = ad7746_acquire(ad7746);
-    cap_1[n] = (((float)cap_hex_1-0x800000)/0xFFFFFF*8.192);
-    cap_avg_1 += cap_1[n]/N_SMPLS;
+    cap_1[n] = ad7746_convert_to_capacitance(cap_hex_1);
+    cap_avg_1 += cap_1[n]/n_smpls;
 
     if (dual_chnl == TRUE) {
       ad7746->cin = AD7746_CIN1;
@@ -94,24 +104,24 @@ _s32 main(int argc, char *argv[])
       ad7746->excl = AD7746_EXCL_1_OVER_2;
       ad7746_write_setup(ad7746);
       cap_hex_2 = ad7746_acquire(ad7746);
-      cap_2[n] = (((float)cap_hex_2-0x800000)/0xFFFFFF*8.192);
-      cap_avg_2 += cap_2[n]/N_SMPLS;
+      cap_2[n] = ad7746_convert_to_capacitance(cap_hex_2);
+      cap_avg_2 += cap_2[n]/n_smpls;
     }
 
     if (dual_chnl == TRUE) {
       printf("\e[1;32mCAP_1: 0x%02X = %.6f pF\t\t"
-        "CAP_2: 0x%02X = %.6f pF\e[0m\n", cap_hex_1, cap_1[n],
-        cap_hex_2, cap_2[n]);
+        "CAP_2: 0x%02X = %.6f pF\e[0m\n", cap_hex_1, cap_1[n]*1E12,
+        cap_hex_2, cap_2[n]*1E12);
     }
     else {
-      printf("\e[1;32mCAP: 0x%02X = %.6f pF\e[0m\n", cap_hex_1, cap_1[n]);
+      printf("\e[1;32mCAP: 0x%02X = %.6f pF\e[0m\n", cap_hex_1, cap_1[n]*1E12);
     }
   }
 
-  for(n=0;n<N_SMPLS;n++) {
-    cap_std_1 += ((cap_1[n]-cap_avg_1)*(cap_1[n]-cap_avg_1))/N_SMPLS;
+  for (n=0;n<n_smpls;n++) {
+    cap_std_1 += ((cap_1[n]-cap_avg_1)*(cap_1[n]-cap_avg_1))/n_smpls;
     if (dual_chnl == TRUE) {
-      cap_std_2 += ((cap_2[n]-cap_avg_2)*(cap_2[n]-cap_avg_2))/N_SMPLS;
+      cap_std_2 += ((cap_2[n]-cap_avg_2)*(cap_2[n]-cap_avg_2))/n_smpls;
     }
   }
   cap_std_1 = sqrtf(cap_std_1);
@@ -119,19 +129,23 @@ _s32 main(int argc, char *argv[])
     cap_std_2 = sqrtf(cap_std_2);
   }
 
-  printf("\e[1;33mN: %u\e[0m\n", N_SMPLS);
+  printf("\e[1;33mN: %u\e[0m\n", n_smpls);
   if (dual_chnl == TRUE) {
     printf("\e[1;33mCAP_AVG_1: %.6f pF\t\t"
-      "CAP_AVG_2: %.6f pF\e[0m\n", cap_avg_1, cap_avg_2);
+      "CAP_AVG_2: %.6f pF\e[0m\n", cap_avg_1*1E12, cap_avg_2*1E12);
     printf("\e[1;33mCAP_STD_1: %.3f aF\t\t"
-     "CAP_STD_2: %.3f aF\e[0m\n", cap_std_1*1E6, cap_std_2*1E6);
+     "CAP_STD_2: %.3f aF\e[0m\n", cap_std_1*1E18, cap_std_2*1E18);
   }
   else {
-    printf("\e[1;33mCAP_AVG: %.6f pF\e[0m\n", cap_avg_1);
-    printf("\e[1;33mCAP_STD: %.3f aF\e[0m\n", cap_std_1*1E6);
+    printf("\e[1;33mCAP_AVG: %.6f pF\e[0m\n", cap_avg_1*1E12);
+    printf("\e[1;33mCAP_STD: %.3f aF\e[0m\n", cap_std_1*1E18);
   }
+
+  free(cap_1);
+  if (dual_chnl == TRUE) free(cap_2);
 
   ad7746_idle(ad7746);
   ad7746_delete(ad7746);
   return 0;
 }
+

@@ -207,3 +207,9 @@ _u8 ad7746_read_capdac(_ad7746 *ad7746)
   return (i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DAC_A) &
     AD7746_CAP_DAC_A_DACA);
 }
+
+/*----------------------------------------------------------------------------*/
+float ad7746_convert_to_capacitance(_u32 cdc)
+{
+  return ((float)cdc-0x800000)/0xFFFFFF*8.192E-12;
+}

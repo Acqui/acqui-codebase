@@ -90,7 +90,6 @@ void ltc2493_write_setup(_ltc2493 *ltc2493)
   }
 
   write(THIS->fd, buf, 1);
-  usleep(ltc2493->usleep);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -99,6 +98,7 @@ _s32 ltc2493_acquire(_ltc2493 *ltc2493)
   _u8  buf[4];
   _s32 conv;
 
+  usleep(ltc2493->usleep);
   if(read(THIS->fd, &buf, 4) != 4)
     return (0x03 << 29);
   else {
@@ -110,4 +110,10 @@ _s32 ltc2493_acquire(_ltc2493 *ltc2493)
     if (buf[0] & 0x40) return conv-0xFFFFFF;
     else return conv;
   }
+}
+
+/*----------------------------------------------------------------------------*/
+float ltc2493_convert_to_voltage(_s32 adc)
+{
+  return ((float)adc/16777216.0)*1.65;
 }

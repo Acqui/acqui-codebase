@@ -20,6 +20,7 @@ _s32 main(int argc, char *argv[])
   sprintf(buf, "%d", GPIO_PIN);
   write(fd, buf, strlen(buf));
   close(fd);
+  usleep(1000);
 
   sprintf(buf, "/sys/class/gpio/gpio%d/direction", GPIO_PIN);
   fd = open(buf, O_WRONLY);
