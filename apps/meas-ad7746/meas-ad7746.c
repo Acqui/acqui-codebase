@@ -10,13 +10,14 @@
 #define AD7746_ADDR  0x48
 #define CAPDAC       0x00
 #define N_SMPLS      10
+#define MAX_SMPLS    250
 
 /*----------------------------------------------------------------------------*/
 _s32 main(int argc, char *argv[])
 {
   _ad7746 *ad7746 = ad7746_new(I2C_DEV, AD7746_ADDR);
   _u8  capdac = CAPDAC;
-  _u16 n_smpls = N_SMPLS;
+  _u32 n_smpls = N_SMPLS;
   _u32 cap_hex_1, cap_hex_2;
   float *cap_1;
   float *cap_2;
@@ -24,7 +25,7 @@ _s32 main(int argc, char *argv[])
   float cap_avg_2 = 0.0;
   float cap_std_1 = 0.0;
   float cap_std_2 = 0.0;
-  _u8  n;
+  _u32  n;
   _bool dual_chnl = FALSE;
   _s32 opt;
 
@@ -53,6 +54,8 @@ _s32 main(int argc, char *argv[])
         break;
       case 'n':
         sscanf(optarg,"%u",(_u32 *)&n_smpls);
+        if (n_smpls == 0) n_smpls = N_SMPLS;
+        if (n_smpls > MAX_SMPLS) n_smpls = MAX_SMPLS;
         break;
       case '?':
         ad7746_delete(ad7746);
@@ -148,4 +151,3 @@ _s32 main(int argc, char *argv[])
   ad7746_delete(ad7746);
   return 0;
 }
-

@@ -9,6 +9,7 @@
 #define I2C_DEV       "/dev/i2c-1"
 #define LTC2493_ADDR  0x24
 #define N_SMPLS       10
+#define MAX_SMPLS     250
 
 /*----------------------------------------------------------------------------*/
 _s32 main(int argc, char *argv[])
@@ -16,11 +17,11 @@ _s32 main(int argc, char *argv[])
   _ltc2493 *ltc2493 = ltc2493_new(I2C_DEV, LTC2493_ADDR);
   _s32 conv;
   _s32 opt;
-  _u16 n_smpls = N_SMPLS;
+  _u32 n_smpls = N_SMPLS;
   float *vlt;
   float vlt_avg = 0.0;
   float vlt_std = 0.0;
-  _u8 n;
+  _u32 n;
 
   if (argc==2 && strcmp (argv[1],"--help") == 0) {
     printf("usage: meas-ltc2493 [--help] [-c CHANNEL] [-n SAMPLES]\n\n");
@@ -59,6 +60,8 @@ _s32 main(int argc, char *argv[])
         break;
       case 'n':
         sscanf(optarg,"%u",(_u32 *)&n_smpls);
+        if (n_smpls == 0) n_smpls = MAX_SMPLS;
+        if (n_smpls > MAX_SMPLS) n_smpls = MAX_SMPLS;
         break;
       case '?':
         ltc2493_delete(ltc2493);

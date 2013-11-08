@@ -13,7 +13,7 @@
 #define THIS ((_ltc2493_priv *)ltc2493->priv)
 
 typedef struct {
- _s32 fd;
+  _s32 fd;
 } _ltc2493_priv;
 
 /*----------------------------------------------------------------------------*/
@@ -58,38 +58,38 @@ void ltc2493_delete(_ltc2493 *ltc2493)
 /*----------------------------------------------------------------------------*/
 void ltc2493_write_setup(_ltc2493 *ltc2493)
 {
-  _u8 buf[1];
+  _u8 buf;
 
   switch (ltc2493->chnl_sel) {
     case LTC2493_CHNL_0_1:
-      buf[0] = 0xA0;
+      buf = 0xA0;
       break;
     case LTC2493_CHNL_2_3:
-      buf[0] = 0xA1;
+      buf = 0xA1;
       break;
     case LTC2493_CHNL_1_0:
-      buf[0] = 0xA8;
+      buf = 0xA8;
       break;
     case LTC2493_CHNL_3_2:
-      buf[0] = 0xA9;
+      buf = 0xA9;
       break;
     case LTC2493_CHNL_0:
-      buf[0] = 0xB0;
+      buf = 0xB0;
       break;
     case LTC2493_CHNL_2:
-      buf[0] = 0xB1;
+      buf = 0xB1;
       break;
     case LTC2493_CHNL_1:
-      buf[0] = 0xB8;
+      buf = 0xB8;
       break;
     case LTC2493_CHNL_3:
-      buf[0] = 0xB9;
+      buf = 0xB9;
       break;
     default:
-      buf[0] = 0x00;
+      buf = 0x00;
   }
 
-  write(THIS->fd, buf, 1);
+  write(THIS->fd, &buf, 1);
 }
 
 /*----------------------------------------------------------------------------*/
