@@ -2,6 +2,7 @@
 #define _LTC2493_H
 
 #include "../sys/types.h"
+#include "../sys/gpio.h"
 
 typedef struct {
   enum {LTC2493_CHNL_0_1, LTC2493_CHNL_2_3,
@@ -9,6 +10,7 @@ typedef struct {
         LTC2493_CHNL_0, LTC2493_CHNL_2,
         LTC2493_CHNL_1, LTC2493_CHNL_3} chnl_sel;
  _u32 usleep;
+ _gpio_board *gpio_board;
   _priv *priv;
 } _ltc2493;
 

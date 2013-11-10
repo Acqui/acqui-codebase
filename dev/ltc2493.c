@@ -26,6 +26,7 @@ _ltc2493* ltc2493_new(char *dev, _u8 addr)
   ltc2493->priv = malloc(sizeof(_ltc2493_priv));
 
   ltc2493->usleep = 200000;
+  ltc2493->gpio_board = NULL;
 
   if ((THIS->fd = open(dev, O_RDWR)) < 0) {
     fprintf(stderr,"Unable to open I2C control file.\n");
@@ -89,7 +90,9 @@ void ltc2493_write_setup(_ltc2493 *ltc2493)
       buf = 0x00;
   }
 
+  gpio_select_board(ltc2493->gpio_board);
   write(THIS->fd, &buf, 1);
+  gpio_deselect_board(ltc2493->gpio_board);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -98,6 +101,7 @@ _s32 ltc2493_acquire(_ltc2493 *ltc2493)
   _u8  buf[4];
   _s32 conv;
 
+  gpio_select_board(ltc2493->gpio_board);
   usleep(ltc2493->usleep);
   if(read(THIS->fd, &buf, 4) != 4)
     return (0x03 << 29);
@@ -110,6 +114,7 @@ _s32 ltc2493_acquire(_ltc2493 *ltc2493)
     if (buf[0] & 0x40) return conv-0xFFFFFF;
     else return conv;
   }
+  gpio_deselect_board(ltc2493->gpio_board);
 }
 
 /*----------------------------------------------------------------------------*/

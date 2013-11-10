@@ -1,7 +1,7 @@
 #ifndef _GPIO_H
 #define _GPIO_H
 
-#include "../sys/types.h"
+#include "types.h"
 
 typedef struct __gpio_board _gpio_board;
 typedef _u8 _gpio_pin;

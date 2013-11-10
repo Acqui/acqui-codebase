@@ -92,6 +92,7 @@ _ad7746* ad7746_new(char *dev, _u8 addr)
   ad7746->excl = AD7746_EXCL_1_OVER_2;
   ad7746->cap_diff = FALSE;
   ad7746->usleep = 200000;
+  ad7746->gpio_board = NULL;
 
   if ((THIS->fd = open(dev, O_RDWR)) < 0) {
     fprintf(stderr,"Unable to open I2C control file.\n");
@@ -134,25 +135,31 @@ void ad7746_write_setup(_ad7746 *ad7746)
   if (ad7746->excl == AD7746_EXCL_1_OVER_2)
     exc_reg |= AD7746_EXC_SETUP_EXCLVL0 | AD7746_EXC_SETUP_EXCLVL1;
   exc_reg |= AD7746_EXC_SETUP_EXCON;
+  gpio_select_board(ad7746->gpio_board);
   i2c_smbus_write_byte_data(THIS->fd, AD7746_EXC_SETUP, exc_reg);
 
   if (ad7746->cin == AD7746_CIN2) cap_reg |= AD7746_CAP_SETUP_CIN2;
   if (ad7746->cap_diff == TRUE) cap_reg |= AD7746_CAP_SETUP_CAPDIFF;
   cap_reg |= AD7746_CAP_SETUP_CAPEN;
   i2c_smbus_write_byte_data(THIS->fd, AD7746_CAP_SETUP, cap_reg);
+  gpio_deselect_board(ad7746->gpio_board);
 }
 
 /*----------------------------------------------------------------------------*/
 void ad7746_idle(_ad7746 *ad7746)
 {
+  gpio_select_board(ad7746->gpio_board);
   i2c_smbus_write_byte_data(THIS->fd, AD7746_CAP_SETUP, 0x00);
+  gpio_deselect_board(ad7746->gpio_board);
 }
 
 /*----------------------------------------------------------------------------*/
 void ad7746_write_capdac(_ad7746 *ad7746,_u8 capdac)
 {
+  gpio_select_board(ad7746->gpio_board);
   i2c_smbus_write_byte_data(THIS->fd, AD7746_CAP_DAC_A,
     AD7746_CAP_DAC_A_DACAENA | (capdac & AD7746_CAP_DAC_A_DACA));
+  gpio_deselect_board(ad7746->gpio_board);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -160,6 +167,7 @@ _u16 ad7746_calibrate(_ad7746 *ad7746,_u8 capdac)
 {
   _u16 data;
 
+  gpio_select_board(ad7746->gpio_board);
   i2c_smbus_write_byte_data(THIS->fd, AD7746_CAP_DAC_A,
     AD7746_CAP_DAC_A_DACAENA | (capdac & AD7746_CAP_DAC_A_DACA));
   i2c_smbus_write_byte_data(THIS->fd, AD7746_CONFIGURE,
@@ -171,6 +179,7 @@ _u16 ad7746_calibrate(_ad7746 *ad7746,_u8 capdac)
     AD7746_STATUS_RDYCAP) continue;
   data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_OFFSET_H) << 0x08;
   data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_OFFSET_L);
+  gpio_deselect_board(ad7746->gpio_board);
 
   return data;
 }
@@ -180,16 +189,20 @@ _u32 ad7746_acquire(_ad7746 *ad7746)
 {
   _u32 data;
 
+  gpio_select_board(ad7746->gpio_board);
   i2c_smbus_write_byte_data(THIS->fd, AD7746_CONFIGURE,
     AD7746_CONFIGURE_MD1 |
     AD7746_CONFIGURE_CAPF2 | AD7746_CONFIGURE_CAPF1 |
     AD7746_CONFIGURE_CAPF0);
+  gpio_deselect_board(ad7746->gpio_board);
   usleep(ad7746->usleep);
+  gpio_select_board(ad7746->gpio_board);
   while (i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
     AD7746_STATUS_RDYCAP) continue;
   data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_H) << 0x0F;
   data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_M) << 0x08;
   data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_L);
+  gpio_deselect_board(ad7746->gpio_board);
 
   return data;
 }
@@ -197,15 +210,27 @@ _u32 ad7746_acquire(_ad7746 *ad7746)
 /*----------------------------------------------------------------------------*/
 _bool ad7746_read_excerr(_ad7746 *ad7746)
 {
-  return ((i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
+  _bool excerr;
+
+  gpio_select_board(ad7746->gpio_board);
+  excerr = ((i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
     AD7746_STATUS_EXCERR) > 0x00);
+  gpio_deselect_board(ad7746->gpio_board);
+
+  return excerr;
 }
 
 /*----------------------------------------------------------------------------*/
 _u8 ad7746_read_capdac(_ad7746 *ad7746)
 {
-  return (i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DAC_A) &
+  _u8 capdac;
+
+  gpio_select_board(ad7746->gpio_board);
+  capdac = (i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DAC_A) &
     AD7746_CAP_DAC_A_DACA);
+  gpio_deselect_board(ad7746->gpio_board);
+
+  return capdac;
 }
 
 /*----------------------------------------------------------------------------*/

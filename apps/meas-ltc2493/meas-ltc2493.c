@@ -5,11 +5,13 @@
 #include <unistd.h>
 
 #include "../../dev/ltc2493.h"
+#include "../../sys/gpio.h"
 
 #define I2C_DEV       "/dev/i2c-1"
 #define LTC2493_ADDR  0x24
 #define N_SMPLS       10
 #define MAX_SMPLS     250
+#define GPIO_PIN      48
 
 /*----------------------------------------------------------------------------*/
 _s32 main(int argc, char *argv[])
@@ -18,18 +20,24 @@ _s32 main(int argc, char *argv[])
   _s32 conv;
   _s32 opt;
   _u32 n_smpls = N_SMPLS;
+  _u8 board = GPIO_PIN;
+  _bool select = TRUE;
+  _gpio *gpio = gpio_new();
+  _gpio_board *gpio_board;
   float *vlt;
   float vlt_avg = 0.0;
   float vlt_std = 0.0;
   _u32 n;
+  _bool board_once = FALSE;
 
   if (argc==2 && strcmp (argv[1],"--help") == 0) {
-    printf("usage: meas-ltc2493 [--help] [-c CHANNEL] [-n SAMPLES]\n\n");
+    printf("usage: meas-ltc2493 [--help] [-b] [-c CHANNEL] [-n SAMPLES]\n\n");
     printf("  --help,      display this help and exit\n");
     printf("  -c CHANNEL,  select measurement channel(s)\n");
     printf("               [ 0 = default, 1, 2, 3, 0-1, 1-0, 2-3, 3-2 ]\n");
-    printf("  -n SAMPLES   number of samples\n");
+    printf("  -n SAMPLES,  number of samples\n");
     printf("               [ %d = default ]\n", N_SMPLS);
+    printf("  -b           keep board selected\n");
     if (ltc2493 != NULL) ltc2493_delete(ltc2493);
     return 0;
   }
@@ -37,7 +45,7 @@ _s32 main(int argc, char *argv[])
   if (ltc2493 == NULL) return 1;
   ltc2493->chnl_sel = LTC2493_CHNL_0;
 
-  while ((opt = getopt(argc, argv, "c:n:")) != -1) {
+  while ((opt = getopt(argc, argv, "bc:n:")) != -1) {
     switch (opt) {
       case 'c':
         if (strcmp(optarg,"0") == 0) ltc2493->chnl_sel = LTC2493_CHNL_0;
@@ -63,6 +71,9 @@ _s32 main(int argc, char *argv[])
         if (n_smpls == 0) n_smpls = MAX_SMPLS;
         if (n_smpls > MAX_SMPLS) n_smpls = MAX_SMPLS;
         break;
+      case 'b':
+        board_once = TRUE;
+        break;
       case '?':
         ltc2493_delete(ltc2493);
         return 1;
@@ -71,6 +82,15 @@ _s32 main(int argc, char *argv[])
         return 1;
     }
   }
+
+  gpio_board = gpio_new_board(gpio, &board, &select, 1);
+  if (gpio_board == NULL) {
+    gpio_delete(gpio);
+    ltc2493_delete(ltc2493);
+    return 1;
+  }
+  if (board_once == FALSE) ltc2493->gpio_board = gpio_board;
+  else gpio_select_board(gpio_board);
 
   vlt = malloc(sizeof(float)*n_smpls);
   ltc2493_write_setup(ltc2493);
@@ -94,5 +114,7 @@ _s32 main(int argc, char *argv[])
 
   free(vlt);
   ltc2493_delete(ltc2493);
+  gpio_delete_board(gpio, gpio_board);
+  gpio_delete(gpio);
   return 0;
 }

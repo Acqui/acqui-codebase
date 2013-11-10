@@ -2,6 +2,7 @@
 #define _AD7746_H
 
 #include "../sys/types.h"
+#include "../sys/gpio.h"
 
 typedef struct {
   enum {AD7746_CIN1, AD7746_CIN2} cin;
@@ -10,6 +11,7 @@ typedef struct {
         AD7746_EXCL_3_OVER_8, AD7746_EXCL_1_OVER_2} excl;
   _bool cap_diff;
   _u32 usleep;
+  _gpio_board *gpio_board;
   _priv *priv;
 } _ad7746;
 

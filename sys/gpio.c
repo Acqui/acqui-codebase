@@ -44,7 +44,7 @@ _gpio* gpio_new(void)
   memset(THIS->gpio_allocation, 0, sizeof(_bool)*GPIO_MAX_PINS);
   memset(THIS->gpio_config, GPIO_CFG_NONE, sizeof(_bool)*GPIO_MAX_PINS);
 
-  gpio->usleep = 1000000;
+  gpio->usleep = 400000;
 
   return gpio;
 }
@@ -65,8 +65,10 @@ _gpio_board* gpio_new_board(_gpio *gpio, _u8 *gpio_pin_nr,
 
   for (n=0; n<size; n++) {
     if (THIS->gpio_config[gpio_pin_nr[n]] == GPIO_CFG_IN ||
-        THIS->gpio_config[gpio_pin_nr[n]] == GPIO_CFG_OUT)
+        THIS->gpio_config[gpio_pin_nr[n]] == GPIO_CFG_OUT) {
+      fprintf(stderr,"GPIO pin configuration mismatch.");
       return NULL;
+    }
   }
 
   gpio_board = malloc(sizeof(_gpio_board));
@@ -98,7 +100,7 @@ void gpio_delete_board(_gpio *gpio, _gpio_board *gpio_board)
       THIS->gpio_allocation[gpio_board->gpio_pin_nr[n]] -= 1;
     if (THIS->gpio_allocation[gpio_board->gpio_pin_nr[n]] == 0 ) {
       THIS->gpio_config[gpio_board->gpio_pin_nr[n]] = GPIO_CFG_NONE;
-      /*gpio_unexport(gpio, gpio_board->gpio_pin_nr[n]);*/
+      gpio_unexport(gpio, gpio_board->gpio_pin_nr[n]);
     }
   }
 
@@ -112,6 +114,8 @@ void gpio_select_board(_gpio_board *gpio_board)
 {
   _u8 n;
 
+  if (gpio_board == NULL) return;
+
   for (n=0; n < gpio_board->size; n++) {
     gpio_write_value(gpio_board->gpio_pin_nr[n], gpio_board->select[n]);
   }
@@ -121,6 +125,8 @@ void gpio_select_board(_gpio_board *gpio_board)
 void gpio_deselect_board(_gpio_board *gpio_board)
 {
   _u8 n;
+
+  if (gpio_board == NULL) return;
 
   for (n=0; n < gpio_board->size; n++) {
     gpio_write_value(gpio_board->gpio_pin_nr[n], FALSE);
@@ -137,8 +143,10 @@ _gpio_pin* gpio_new_pin(_gpio *gpio, _u8 gpio_pin_nr,
        (THIS->gpio_config[gpio_pin_nr] == GPIO_CFG_IN &&
          gpio_direction == GPIO_IN ) ||
        (THIS->gpio_config[gpio_pin_nr] == GPIO_CFG_IN &&
-        gpio_direction == GPIO_OUT)))
+        gpio_direction == GPIO_OUT))) {
+    fprintf(stderr,"GPIO pin configuration mismatch.");
     return NULL;
+  }
 
   gpio_pin = malloc(sizeof(_gpio_pin));
   *gpio_pin = gpio_pin_nr;
@@ -170,7 +178,7 @@ void gpio_delete_pin(_gpio *gpio,_gpio_pin *gpio_pin)
     THIS->gpio_allocation[*gpio_pin] -= 1;
   if (THIS->gpio_allocation[*gpio_pin] == 0 ) {
     THIS->gpio_config[*gpio_pin] = GPIO_CFG_NONE;
-    /*gpio_unexport(gpio, *gpio_pin);*/
+    gpio_unexport(gpio, *gpio_pin);
   }
 
   free(gpio_pin);

@@ -5,12 +5,14 @@
 #include <unistd.h>
 
 #include "../../dev/ad7746.h"
+#include "../../sys/gpio.h"
 
 #define I2C_DEV      "/dev/i2c-1"
 #define AD7746_ADDR  0x48
 #define CAPDAC       0x00
 #define N_SMPLS      10
 #define MAX_SMPLS    250
+#define GPIO_PIN     48
 
 /*----------------------------------------------------------------------------*/
 _s32 main(int argc, char *argv[])
@@ -19,6 +21,10 @@ _s32 main(int argc, char *argv[])
   _u8  capdac = CAPDAC;
   _u32 n_smpls = N_SMPLS;
   _u32 cap_hex_1, cap_hex_2;
+  _u8 board = GPIO_PIN;
+  _bool select = TRUE;
+  _gpio *gpio = gpio_new();
+  _gpio_board *gpio_board;
   float *cap_1;
   float *cap_2;
   float cap_avg_1 = 0.0;
@@ -27,24 +33,26 @@ _s32 main(int argc, char *argv[])
   float cap_std_2 = 0.0;
   _u32  n;
   _bool dual_chnl = FALSE;
+  _bool board_once = FALSE;
   _s32 opt;
 
-
   if (argc==2 && strcmp (argv[1],"--help") == 0) {
-    printf("usage: meas-ad7746 [--help] [-d] [-c CAPDAC] [-n SAMPLES]\n\n");
+    printf("usage: meas-ad7746 [--help] [-b] [-d] "
+      "[-c CAPDAC] [-n SAMPLES]\n\n");
     printf("  --help,      display this help and exit\n");
     printf("  -c CAPDAC,   set hexdecimal CAPDAC value\n");
     printf("               [ 0x%02X = default ]\n", CAPDAC);
     printf("  -n SAMPLES,  number of samples\n");
     printf("               [ %d = default ]\n", N_SMPLS);
-    printf("  -d           select dual channel\n");
+    printf("  -d,          select dual channel\n");
+    printf("  -b           keep board selected\n");
     if (ad7746 != NULL) ad7746_delete(ad7746);
     return 0;
   }
 
   if (ad7746 == NULL) return 1;
 
-  while ((opt = getopt(argc, argv, "dc:n:")) != -1) {
+  while ((opt = getopt(argc, argv, "bdc:n:")) != -1) {
     switch (opt) {
       case 'd':
         dual_chnl = TRUE;
@@ -57,6 +65,9 @@ _s32 main(int argc, char *argv[])
         if (n_smpls == 0) n_smpls = N_SMPLS;
         if (n_smpls > MAX_SMPLS) n_smpls = MAX_SMPLS;
         break;
+      case 'b':
+        board_once = TRUE;
+        break;
       case '?':
         ad7746_delete(ad7746);
         return 1;
@@ -65,6 +76,15 @@ _s32 main(int argc, char *argv[])
         return 1;
     }
   }
+
+  gpio_board = gpio_new_board(gpio, &board, &select, 1);
+  if (gpio_board == NULL) {
+    gpio_delete(gpio);
+    ad7746_delete(ad7746);
+    return 1;
+  }
+  if (board_once == FALSE)  ad7746->gpio_board = gpio_board;
+  else gpio_select_board(gpio_board);
 
   cap_1 = malloc(sizeof(float)*n_smpls);
   if (dual_chnl == TRUE) cap_2 = malloc(sizeof(float)*n_smpls);
@@ -144,10 +164,14 @@ _s32 main(int argc, char *argv[])
     printf("\e[1;33mCAP_STD: %.3f aF\e[0m\n", cap_std_1*1E18);
   }
 
+  gpio_deselect_board(gpio_board);
+
   free(cap_1);
   if (dual_chnl == TRUE) free(cap_2);
 
   ad7746_idle(ad7746);
   ad7746_delete(ad7746);
+  gpio_delete_board(gpio, gpio_board);
+  gpio_delete(gpio);
   return 0;
 }
