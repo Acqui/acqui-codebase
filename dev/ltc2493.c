@@ -118,6 +118,14 @@ _s32 ltc2493_acquire(_ltc2493 *ltc2493)
 }
 
 /*----------------------------------------------------------------------------*/
+_bool ltc2493_out_of_range(_s32 adc)
+{
+  if (adc == 0xFF000001) return TRUE;
+  if (adc == 0x60000000) return TRUE;
+  return FALSE;
+}
+
+/*----------------------------------------------------------------------------*/
 float ltc2493_convert_to_voltage(_s32 adc)
 {
   return ((float)adc/16777216.0)*1.65;

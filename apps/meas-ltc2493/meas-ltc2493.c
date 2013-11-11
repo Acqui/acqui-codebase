@@ -100,7 +100,10 @@ _s32 main(int argc, char *argv[])
     vlt[n] = ltc2493_convert_to_voltage(conv);
     vlt_avg += vlt[n]/n_smpls;
 
-    printf("\e[1;32mVLT: %X = %f V\e[0m\n", conv, vlt[n]);
+    if (ltc2493_out_of_range(conv)) {
+     printf("\e[1;31mVLT: OUT OF RANGE\e[0m\n");
+     return 1;
+    } else printf("\e[1;32mVLT: %X = %f V\e[0m\n", conv, vlt[n]);
   }
 
   for (n=0;n<n_smpls;n++) {
