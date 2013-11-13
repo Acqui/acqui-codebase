@@ -89,8 +89,8 @@ _s32 main(int argc, char *argv[])
   cap_1 = malloc(sizeof(float)*n_smpls);
   if (dual_chnl == TRUE) cap_2 = malloc(sizeof(float)*n_smpls);
 
-  ad7746->cin = AD7746_CIN2;
-  ad7746->exc = AD7746_EXCB;
+  ad7746->cin = AD7746_CIN1;
+  ad7746->exc = AD7746_EXCA;
   ad7746->excl = AD7746_EXCL_1_OVER_2;
   ad7746_write_setup(ad7746);
 
@@ -113,8 +113,8 @@ _s32 main(int argc, char *argv[])
     printf("EXCERR:     0\n");
 
   for (n=0;n<n_smpls;n++) {
-    ad7746->cin = AD7746_CIN2;
-    ad7746->exc = AD7746_EXCB;
+    ad7746->cin = AD7746_CIN1;
+    ad7746->exc = AD7746_EXCA;
     ad7746->excl = AD7746_EXCL_1_OVER_2;
     ad7746_write_setup(ad7746);
     cap_hex_1 = ad7746_acquire(ad7746);
@@ -122,8 +122,8 @@ _s32 main(int argc, char *argv[])
     cap_avg_1 += cap_1[n]/n_smpls;
 
     if (dual_chnl == TRUE) {
-      ad7746->cin = AD7746_CIN1;
-      ad7746->exc = AD7746_EXCA;
+      ad7746->cin = AD7746_CIN2;
+      ad7746->exc = AD7746_EXCB;
       ad7746->excl = AD7746_EXCL_1_OVER_2;
       ad7746_write_setup(ad7746);
       cap_hex_2 = ad7746_acquire(ad7746);
@@ -132,8 +132,8 @@ _s32 main(int argc, char *argv[])
     }
 
     if (dual_chnl == TRUE) {
-      printf("\e[1;32mCAP_1: 0x%02X = %.6f pF\t\t"
-        "CAP_2: 0x%02X = %.6f pF\e[0m\n", cap_hex_1, cap_1[n]*1E12,
+      printf("\e[1;32mCAP-1: 0x%02X = %.6f pF\t\t"
+        "CAP-2: 0x%02X = %.6f pF\e[0m\n", cap_hex_1, cap_1[n]*1E12,
         cap_hex_2, cap_2[n]*1E12);
     }
     else {

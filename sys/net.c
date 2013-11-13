@@ -59,3 +59,18 @@ _bool net_write(_net *net, const void *buf, size_t size)
  return (write(THIS->conn_fd, buf, size)!=-1);
 }
 
+/*----------------------------------------------------------------------------*/
+float net_float_swap(float val)
+{
+  float out_float;
+  _u8 *in_val = (_u8*) &val;
+  _u8 *out_val = (_u8*) &out_float;
+
+  out_val[0] = in_val[3];
+  out_val[1] = in_val[2];
+  out_val[2] = in_val[1];
+  out_val[3] = in_val[0];
+
+  return out_float;
+}
+

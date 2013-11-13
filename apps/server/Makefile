@@ -6,14 +6,17 @@ SYS = ../../sys
 .PHONY: all
 all: server
 
-server: server.o $(SYS)/gpio.o $(SYS)/net.o $(DEV)/ad7746.o
-	gcc -o server server.o $(SYS)/net.o $(SYS)/gpio.o $(DEV)/ad7746.o
+server: server.o $(SYS)/gpio.o $(SYS)/net.o  $(DEV)/ltc2493.o $(DEV)/ad7746.o
+	gcc -o server server.o $(SYS)/net.o $(SYS)/gpio.o $(DEV)/ltc2493.o $(DEV)/ad7746.o
 
 gpio.o: $(SYS)/gpio.c
 	gcc ${CFLAGS} -c $(SYS)/gpio.c
 
 net.o: $(SYS)/net.c
 	gcc ${CFLAGS} -c $(SYS)/net.c
+
+ltc2493.o: $(DEV)/ltc2493.c
+	gcc ${CFLAGS} -c $(DEV)/ltc2493.c
 
 ad7746.o: $(DEV)/ad7746.c
 	gcc ${CFLAGS} -c $(DEV)/ad7746.c
@@ -26,6 +29,7 @@ clean:
 	@rm -f server.o
 	@rm -f $(SYS)/gpio.o
 	@rm -f $(SYS)/net.o
+	@rm -f $(DEV)/ltc2493.o
 	@rm -f $(DEV)/ad7746.o
 
 .PHONY: maintainer-clean
