@@ -68,8 +68,8 @@
 #define AD7746_CAP_DAC_A_DACA    0x7F
 #define AD7746_CAP_DAC_A_DACAENA 0x80
 
-#define AD7746_CAP_DAC_A_DACB    0x7F
-#define AD7746_CAP_DAC_A_DACBENB 0x80
+#define AD7746_CAP_DAC_B_DACB    0x7F
+#define AD7746_CAP_DAC_B_DACBENB 0x80
 
 /*----------------------------------------------------------------------------*/
 #define THIS ((_ad7746_priv *)ad7746->priv)
@@ -208,6 +208,30 @@ _u32 ad7746_acquire(_ad7746 *ad7746)
 }
 
 /*----------------------------------------------------------------------------*/
+_u32 ad7746_acquire_temp(_ad7746 *ad7746)
+{
+  _u32 data;
+
+  gpio_select_board(ad7746->gpio_board);
+  i2c_smbus_write_byte_data(THIS->fd, AD7746_VT_SETUP,
+    AD7746_VT_SETUP_VTEN | AD7746_VT_SETUP_VTCHOP);
+  i2c_smbus_write_byte_data(THIS->fd, AD7746_CONFIGURE,
+    AD7746_CONFIGURE_MD1 |
+    AD7746_CONFIGURE_VTF1 | AD7746_CONFIGURE_VTF0);
+  gpio_deselect_board(ad7746->gpio_board);
+  usleep(ad7746->usleep);
+  gpio_select_board(ad7746->gpio_board);
+  while (i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
+    AD7746_STATUS_RDYCAP) continue;
+  data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_VT_DATA_H) << 0x0F;
+  data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_VT_DATA_M) << 0x08;
+  data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_VT_DATA_L);
+  gpio_deselect_board(ad7746->gpio_board);
+
+  return data;
+}
+
+/*----------------------------------------------------------------------------*/
 _bool ad7746_read_excerr(_ad7746 *ad7746)
 {
   _bool excerr;
@@ -237,4 +261,10 @@ _u8 ad7746_read_capdac(_ad7746 *ad7746)
 float ad7746_convert_to_capacitance(_u32 cdc)
 {
   return ((float)cdc-0x800000)/0xFFFFFF*8.192E-12;
+}
+
+/*----------------------------------------------------------------------------*/
+float ad7746_convert_to_temperature(_u32 adc)
+{
+  return ((float)adc/2048.0)-2048.0;
 }

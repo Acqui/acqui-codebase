@@ -20,7 +20,7 @@ _s32 main(int argc, char *argv[])
   _ad7746 *ad7746 = ad7746_new(I2C_DEV, AD7746_ADDR);
   _u8  capdac = CAPDAC;
   _u32 n_smpls = N_SMPLS;
-  _u32 cap_hex_1, cap_hex_2;
+  _u32 cap_hex_1, cap_hex_2, temp_hex;
   _u8 board = GPIO_PIN;
   _bool select = TRUE;
   _gpio *gpio = gpio_new();
@@ -47,8 +47,7 @@ _s32 main(int argc, char *argv[])
     printf("  -d,          select dual channel\n");
     printf("  -b           keep board selected\n");
     if (ad7746 != NULL) ad7746_delete(ad7746);
-    return 0;
-  }
+    return 0;  }
 
   if (ad7746 == NULL) return 1;
 
@@ -163,6 +162,10 @@ _s32 main(int argc, char *argv[])
     printf("\e[1;33mCAP_AVG: %.6f pF\e[0m\n", cap_avg_1*1E12);
     printf("\e[1;33mCAP_STD: %.3f aF\e[0m\n", cap_std_1*1E18);
   }
+
+  temp_hex = ad7746_acquire_temp(ad7746);
+  printf("\e[1;33mTEMP: 0x%02X = %f °C\e[0m\n", temp_hex,
+    ad7746_convert_to_temperature(temp_hex));
 
   gpio_deselect_board(gpio_board);
 

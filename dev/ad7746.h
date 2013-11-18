@@ -22,8 +22,10 @@ void     ad7746_idle(_ad7746 *ad7746);
 void     ad7746_write_capdac(_ad7746 *ad7746, _u8 capdac);
 _u16     ad7746_calibrate(_ad7746 *ad7746, _u8 capdac);
 _u32     ad7746_acquire(_ad7746 *ad7746);
+_u32     ad7746_acquire_temp(_ad7746 *ad7746);
 _bool    ad7746_read_excerr(_ad7746 *ad7746);
 _u8      ad7746_read_capdac(_ad7746 *ad7746);
 float    ad7746_convert_to_capacitance(_u32 cdc);
+float    ad7746_convert_to_temperature(_u32 adc);
 
 #endif
