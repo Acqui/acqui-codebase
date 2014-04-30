@@ -177,7 +177,7 @@ _u16 ad7746_calibrate(_ad7746 *ad7746,_u8 capdac)
   usleep(ad7746->usleep);
   while (i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
     AD7746_STATUS_RDYCAP) continue;
-  data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_OFFSET_H) << 0x08;
+  data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_OFFSET_H) << 8;
   data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_OFFSET_L);
   gpio_deselect_board(ad7746->gpio_board);
 
@@ -199,8 +199,8 @@ _u32 ad7746_acquire(_ad7746 *ad7746)
   gpio_select_board(ad7746->gpio_board);
   while (i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
     AD7746_STATUS_RDYCAP) continue;
-  data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_H) << 0x0F;
-  data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_M) << 0x08;
+  data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_H) << 16;
+  data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_M) << 8;
   data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_CAP_DATA_L);
   gpio_deselect_board(ad7746->gpio_board);
 
@@ -223,8 +223,8 @@ _u32 ad7746_acquire_temp(_ad7746 *ad7746)
   gpio_select_board(ad7746->gpio_board);
   while (i2c_smbus_read_byte_data(THIS->fd, AD7746_STATUS) &
     AD7746_STATUS_RDYCAP) continue;
-  data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_VT_DATA_H) << 0x0F;
-  data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_VT_DATA_M) << 0x08;
+  data  = i2c_smbus_read_byte_data(THIS->fd, AD7746_VT_DATA_H) << 16;
+  data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_VT_DATA_M) << 8;
   data |= i2c_smbus_read_byte_data(THIS->fd, AD7746_VT_DATA_L);
   gpio_deselect_board(ad7746->gpio_board);
 
@@ -266,5 +266,5 @@ float ad7746_convert_to_capacitance(_u32 cdc)
 /*----------------------------------------------------------------------------*/
 float ad7746_convert_to_temperature(_u32 adc)
 {
-  return ((float)adc/2048.0)-2048.0;
+  return ((float)adc/2048.0)-4096.0;
 }
