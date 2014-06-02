@@ -112,7 +112,7 @@ _s32 main(int argc, char *argv[])
   vlt_std = sqrtf(vlt_std);
 
   printf("\e[1;33mN %u\e[0m\n", n_smpls);
-  printf("\e[1;33mVLT_AVG: %.3f V\e[0m\n", vlt_avg);
+  printf("\e[1;33mVLT_AVG: %.6f V\e[0m\n", vlt_avg);
   printf("\e[1;33mVLT_STD: %.3f μV\e[0m\n", vlt_std*1E6);
 
   free(vlt);

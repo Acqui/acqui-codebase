@@ -91,7 +91,9 @@ void ltc2493_write_setup(_ltc2493 *ltc2493)
   }
 
   gpio_select_board(ltc2493->gpio_board);
-  write(THIS->fd, &buf, 1);
+  usleep(ltc2493->usleep);
+  i2c_smbus_write_byte(THIS->fd, buf);
+  usleep(ltc2493->usleep);
   gpio_deselect_board(ltc2493->gpio_board);
 }
 
